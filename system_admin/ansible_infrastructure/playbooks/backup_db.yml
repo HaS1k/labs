@@ -1,0 +1,25 @@
+---
+- name: Configure PostgreSQL backup schedule
+  hosts: db_master
+  gather_facts: false
+  tasks:
+    - name: Create generated backup directory
+      ansible.builtin.file:
+        path: "{{ generated_root }}/{{ inventory_hostname }}/backup"
+        state: directory
+        mode: "0755"
+      delegate_to: localhost
+
+    - name: Render backup script
+      ansible.builtin.template:
+        src: ../templates/pg_backup.sh.j2
+        dest: "{{ generated_root }}/{{ inventory_hostname }}/backup/pg_backup.sh"
+        mode: "0750"
+      delegate_to: localhost
+
+    - name: Render cron entry
+      ansible.builtin.template:
+        src: ../templates/pg_backup.cron.j2
+        dest: "{{ generated_root }}/{{ inventory_hostname }}/backup/pg_backup.cron"
+        mode: "0644"
+      delegate_to: localhost

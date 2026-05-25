@@ -1,0 +1,21 @@
+---
+- name: Create generated directory for Grafana
+  ansible.builtin.file:
+    path: "{{ grafana_state_dir }}"
+    state: directory
+    mode: "0755"
+  delegate_to: localhost
+
+- name: Render Grafana datasource
+  ansible.builtin.template:
+    src: datasource.yml.j2
+    dest: "{{ grafana_state_dir }}/datasource.yml"
+    mode: "0644"
+  delegate_to: localhost
+
+- name: Render Grafana dashboard example
+  ansible.builtin.template:
+    src: dashboard.json.j2
+    dest: "{{ grafana_state_dir }}/infrastructure-dashboard.json"
+    mode: "0644"
+  delegate_to: localhost

@@ -1,0 +1,2 @@
+---
+grafana_state_dir: "{{ generated_root }}/{{ inventory_hostname }}/grafana"

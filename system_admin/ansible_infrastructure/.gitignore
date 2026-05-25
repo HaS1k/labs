@@ -1,0 +1,5 @@
+.vault_pass
+_generated/
+*.retry
+*.log
+__pycache__/

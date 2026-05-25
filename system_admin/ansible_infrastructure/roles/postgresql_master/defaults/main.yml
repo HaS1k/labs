@@ -1,0 +1,3 @@
+---
+postgresql_master_state_dir: "{{ generated_root }}/{{ inventory_hostname }}/postgresql_master"
+postgresql_listen_addresses: "*"

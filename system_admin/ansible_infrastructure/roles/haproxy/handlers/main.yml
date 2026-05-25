@@ -1,0 +1,4 @@
+---
+- name: reload haproxy
+  ansible.builtin.debug:
+    msg: "haproxy would be reloaded after configuration change"

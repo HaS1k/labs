@@ -1,0 +1,4 @@
+---
+- name: restart postgresql
+  ansible.builtin.debug:
+    msg: "postgresql master would be restarted after configuration change"

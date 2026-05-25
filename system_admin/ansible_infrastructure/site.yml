@@ -1,0 +1,37 @@
+---
+- name: Apply common role to all servers
+  hosts: all
+  gather_facts: false
+  roles:
+    - common
+
+- name: Configure PostgreSQL master
+  hosts: db_master
+  gather_facts: false
+  roles:
+    - postgresql_master
+
+- name: Configure PostgreSQL replica
+  hosts: db_replica
+  gather_facts: false
+  roles:
+    - postgresql_replica
+
+- name: Configure Nginx web servers
+  hosts: webservers
+  gather_facts: false
+  roles:
+    - nginx
+
+- name: Configure HAProxy load balancers
+  hosts: loadbalancers
+  gather_facts: false
+  roles:
+    - haproxy
+
+- name: Configure monitoring stack
+  hosts: monitoring
+  gather_facts: false
+  roles:
+    - prometheus
+    - grafana

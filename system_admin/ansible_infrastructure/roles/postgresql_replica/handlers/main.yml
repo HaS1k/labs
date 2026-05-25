@@ -1,0 +1,4 @@
+---
+- name: restart postgresql replica
+  ansible.builtin.debug:
+    msg: "postgresql replica would be restarted after configuration change"

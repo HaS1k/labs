@@ -1,0 +1,8 @@
+---
+- name: restart sshd
+  ansible.builtin.debug:
+    msg: "sshd would be restarted after configuration change"
+
+- name: restart chrony
+  ansible.builtin.debug:
+    msg: "chrony would be restarted after configuration change"

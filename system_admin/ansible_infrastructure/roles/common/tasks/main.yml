@@ -1,0 +1,37 @@
+---
+- name: Create generated directory for common configuration
+  ansible.builtin.file:
+    path: "{{ common_state_dir }}"
+    state: directory
+    mode: "0755"
+  delegate_to: localhost
+
+- name: Render base host profile
+  ansible.builtin.template:
+    src: host_profile.txt.j2
+    dest: "{{ common_state_dir }}/host_profile.txt"
+    mode: "0644"
+  delegate_to: localhost
+
+- name: Render hardened SSH configuration example
+  ansible.builtin.template:
+    src: sshd_config_hardening.conf.j2
+    dest: "{{ common_state_dir }}/sshd_config_hardening.conf"
+    mode: "0644"
+  delegate_to: localhost
+  notify: restart sshd
+
+- name: Render NTP configuration example
+  ansible.builtin.template:
+    src: chrony.conf.j2
+    dest: "{{ common_state_dir }}/chrony.conf"
+    mode: "0644"
+  delegate_to: localhost
+  notify: restart chrony
+
+- name: Install common packages when real mode is enabled
+  ansible.builtin.package:
+    name: "{{ common_packages }}"
+    state: present
+  become: true
+  when: ansible_manage_real_services | bool

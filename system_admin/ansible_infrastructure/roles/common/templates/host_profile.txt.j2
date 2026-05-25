@@ -1,0 +1,5 @@
+Host: {{ inventory_hostname }}
+Role groups: {{ group_names | join(', ') }}
+Domain: {{ lab_domain }}
+Common packages: {{ common_packages | join(', ') }}
+Admin users: {{ admin_users | map(attribute='name') | join(', ') }}

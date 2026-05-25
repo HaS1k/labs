@@ -1,0 +1,4 @@
+---
+- name: reload prometheus
+  ansible.builtin.debug:
+    msg: "prometheus would be reloaded after configuration change"

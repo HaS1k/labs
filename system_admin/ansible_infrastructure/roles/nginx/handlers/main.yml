@@ -1,0 +1,4 @@
+---
+- name: reload nginx
+  ansible.builtin.debug:
+    msg: "nginx would be reloaded after virtual host update"

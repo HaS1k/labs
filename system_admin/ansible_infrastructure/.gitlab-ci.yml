@@ -1,0 +1,18 @@
+stages:
+  - lint
+  - syntax
+
+ansible_lint_basic:
+  stage: lint
+  image: python:3.11-slim
+  script:
+    - python -m pip install ansible-core
+    - ansible-inventory -i inventories/lab/hosts.ini --graph
+
+ansible_syntax_check:
+  stage: syntax
+  image: python:3.11-slim
+  script:
+    - python -m pip install ansible-core
+    - echo "$ANSIBLE_VAULT_PASSWORD" > .vault_pass
+    - ansible-playbook -i inventories/lab/hosts.ini site.yml --syntax-check --vault-password-file .vault_pass

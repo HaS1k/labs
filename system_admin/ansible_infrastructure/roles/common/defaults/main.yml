@@ -1,0 +1,7 @@
+---
+common_state_dir: "{{ generated_root }}/{{ inventory_hostname }}/common"
+ssh_port: 22
+ssh_permit_root_login: "no"
+ssh_password_authentication: "no"
+login_grace_time: 30s
+max_auth_tries: 3

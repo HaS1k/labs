@@ -1,0 +1,4 @@
+---
+service_role: database
+postgresql_data_dir: /var/lib/postgresql/16/main
+postgresql_backup_dir: /var/backups/postgresql

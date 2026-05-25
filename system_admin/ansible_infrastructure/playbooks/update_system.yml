@@ -1,0 +1,27 @@
+---
+- name: Plan safe operating system package updates
+  hosts: all
+  gather_facts: false
+  vars:
+    excluded_packages:
+      - linux-image-generic
+      - postgresql
+  tasks:
+    - name: Create generated update plan directory
+      ansible.builtin.file:
+        path: "{{ generated_root }}/{{ inventory_hostname }}/updates"
+        state: directory
+        mode: "0755"
+      delegate_to: localhost
+
+    - name: Render update plan
+      ansible.builtin.copy:
+        dest: "{{ generated_root }}/{{ inventory_hostname }}/updates/update_plan.txt"
+        mode: "0644"
+        content: |
+          Host: {{ inventory_hostname }}
+          Update mode: safe rolling update
+          Excluded packages: {{ excluded_packages | join(', ') }}
+          Pre-checks: disk space, active services, backup status
+          Post-checks: service status, application health endpoints
+      delegate_to: localhost

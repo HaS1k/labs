@@ -1,0 +1,7 @@
+Port {{ ssh_port }}
+PermitRootLogin {{ ssh_permit_root_login }}
+PasswordAuthentication {{ ssh_password_authentication }}
+PubkeyAuthentication yes
+LoginGraceTime {{ login_grace_time }}
+MaxAuthTries {{ max_auth_tries }}
+AllowGroups sudo

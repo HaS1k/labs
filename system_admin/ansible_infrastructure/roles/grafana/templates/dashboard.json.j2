@@ -1,0 +1,8 @@
+{
+  "title": "Infrastructure Overview",
+  "timezone": "browser",
+  "panels": [
+    {"type": "stat", "title": "Web servers", "targets": [{"expr": "up{job=\"webservers\"}"}]},
+    {"type": "stat", "title": "Load balancers", "targets": [{"expr": "up{job=\"loadbalancers\"}"}]}
+  ]
+}

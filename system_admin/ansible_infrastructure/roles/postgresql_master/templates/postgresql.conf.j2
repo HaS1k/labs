@@ -1,0 +1,7 @@
+listen_addresses = '{{ postgresql_listen_addresses }}'
+port = {{ postgresql_port | default(5432) }}
+wal_level = replica
+max_wal_senders = 10
+hot_standby = on
+archive_mode = on
+archive_command = 'test ! -f /var/lib/postgresql/archive/%f && cp %p /var/lib/postgresql/archive/%f'

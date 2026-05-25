@@ -1,0 +1,16 @@
+global:
+  scrape_interval: {{ prometheus_scrape_interval }}
+
+scrape_configs:
+  - job_name: webservers
+    static_configs:
+      - targets:
+{% for host in groups['webservers'] %}
+          - "{{ host }}:{{ hostvars[host].nginx_port | default(80) }}"
+{% endfor %}
+  - job_name: loadbalancers
+    static_configs:
+      - targets:
+{% for host in groups['loadbalancers'] %}
+          - "{{ host }}:{{ hostvars[host].haproxy_stats_port | default(8404) }}"
+{% endfor %}

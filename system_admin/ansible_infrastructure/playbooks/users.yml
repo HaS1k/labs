@@ -1,0 +1,24 @@
+---
+- name: Manage operating system users
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Create generated user management directory
+      ansible.builtin.file:
+        path: "{{ generated_root }}/{{ inventory_hostname }}/users"
+        state: directory
+        mode: "0755"
+      delegate_to: localhost
+
+    - name: Render users manifest
+      ansible.builtin.copy:
+        dest: "{{ generated_root }}/{{ inventory_hostname }}/users/users.yml"
+        mode: "0644"
+        content: |
+          users:
+          {% for user in admin_users %}
+            - name: {{ user.name }}
+              groups: {{ user.groups }}
+              ssh_key: {{ user.ssh_key }}
+          {% endfor %}
+      delegate_to: localhost

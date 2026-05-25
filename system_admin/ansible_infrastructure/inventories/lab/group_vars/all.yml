@@ -1,0 +1,28 @@
+---
+project_name: ansible_infrastructure_lab
+lab_domain: infra.lab
+ansible_manage_real_services: false
+generated_root: "{{ playbook_dir }}/_generated"
+common_packages:
+  - curl
+  - vim
+  - chrony
+admin_users:
+  - name: devops
+    groups: sudo
+    ssh_key: "ssh-ed25519 AAAAexample devops@example.local"
+ntp_servers:
+  - 0.pool.ntp.org
+  - 1.pool.ntp.org
+nginx_document_root: /var/www/infra-lab
+postgresql_version: "16"
+postgresql_database: appdb
+postgresql_user: appuser
+postgresql_password: "{{ vault_postgresql_password | default('vault-password-not-loaded') }}"
+replication_user: replicator
+replication_password: "{{ vault_replication_password | default('vault-replication-not-loaded') }}"
+haproxy_backend_port: 80
+prometheus_scrape_interval: 15s
+grafana_admin_user: admin
+grafana_admin_password: "{{ vault_grafana_admin_password | default('vault-grafana-not-loaded') }}"
+aide_or_monitoring_note: "Metrics are collected from generated target groups."

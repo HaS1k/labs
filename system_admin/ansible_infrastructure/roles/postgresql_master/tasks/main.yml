@@ -1,0 +1,37 @@
+---
+- name: Create generated directory for PostgreSQL master
+  ansible.builtin.file:
+    path: "{{ postgresql_master_state_dir }}"
+    state: directory
+    mode: "0755"
+  delegate_to: localhost
+
+- name: Render master postgresql.conf
+  ansible.builtin.template:
+    src: postgresql.conf.j2
+    dest: "{{ postgresql_master_state_dir }}/postgresql.conf"
+    mode: "0644"
+  delegate_to: localhost
+  notify: restart postgresql
+
+- name: Render pg_hba.conf for replication
+  ansible.builtin.template:
+    src: pg_hba.conf.j2
+    dest: "{{ postgresql_master_state_dir }}/pg_hba.conf"
+    mode: "0600"
+  delegate_to: localhost
+  notify: restart postgresql
+
+- name: Render database bootstrap SQL
+  ansible.builtin.template:
+    src: init.sql.j2
+    dest: "{{ postgresql_master_state_dir }}/init.sql"
+    mode: "0600"
+  delegate_to: localhost
+
+- name: Install PostgreSQL when real mode is enabled
+  ansible.builtin.package:
+    name: "postgresql-{{ postgresql_version }}"
+    state: present
+  become: true
+  when: ansible_manage_real_services | bool

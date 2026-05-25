@@ -1,0 +1,29 @@
+---
+- name: Create generated directory for nginx
+  ansible.builtin.file:
+    path: "{{ nginx_state_dir }}"
+    state: directory
+    mode: "0755"
+  delegate_to: localhost
+
+- name: Render nginx virtual host
+  ansible.builtin.template:
+    src: vhost.conf.j2
+    dest: "{{ nginx_state_dir }}/{{ inventory_hostname }}.conf"
+    mode: "0644"
+  delegate_to: localhost
+  notify: reload nginx
+
+- name: Render web index page
+  ansible.builtin.template:
+    src: index.html.j2
+    dest: "{{ nginx_state_dir }}/index.html"
+    mode: "0644"
+  delegate_to: localhost
+
+- name: Install nginx when real mode is enabled
+  ansible.builtin.package:
+    name: nginx
+    state: present
+  become: true
+  when: ansible_manage_real_services | bool

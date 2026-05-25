@@ -1,0 +1,3 @@
+CREATE USER {{ postgresql_user }} WITH PASSWORD '{{ postgresql_password }}';
+CREATE DATABASE {{ postgresql_database }} OWNER {{ postgresql_user }};
+CREATE USER {{ replication_user }} REPLICATION LOGIN ENCRYPTED PASSWORD '{{ replication_password }}';

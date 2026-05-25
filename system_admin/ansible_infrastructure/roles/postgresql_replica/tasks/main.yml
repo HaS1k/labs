@@ -1,0 +1,22 @@
+---
+- name: Create generated directory for PostgreSQL replica
+  ansible.builtin.file:
+    path: "{{ postgresql_replica_state_dir }}"
+    state: directory
+    mode: "0755"
+  delegate_to: localhost
+
+- name: Render replica recovery settings
+  ansible.builtin.template:
+    src: replica.conf.j2
+    dest: "{{ postgresql_replica_state_dir }}/replica.conf"
+    mode: "0600"
+  delegate_to: localhost
+  notify: restart postgresql replica
+
+- name: Render standby signal marker
+  ansible.builtin.copy:
+    content: "standby_mode = enabled\n"
+    dest: "{{ postgresql_replica_state_dir }}/standby.signal"
+    mode: "0644"
+  delegate_to: localhost
