@@ -1,0 +1,7 @@
+services:
+  web:
+    environment:
+      APP_ENV: production
+      APP_VERSION: ${APP_VERSION:-production}
+    ports:
+      - "${WEB_PORT:-18082}:8080"

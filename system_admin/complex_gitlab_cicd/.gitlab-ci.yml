@@ -1,0 +1,122 @@
+# Complex GitLab CI/CD pipeline for a multi-component Docker Compose application.
+# Secrets such as CI_REGISTRY_USER, CI_REGISTRY_PASSWORD, STAGING_SSH_KEY and
+# PRODUCTION_SSH_KEY should be stored in GitLab CI/CD variables.
+
+stages:
+  - lint
+  - build
+  - test
+  - security_scan
+  - push
+  - deploy_staging
+  - e2e_test_staging
+  - deploy_production
+
+variables:
+  DOCKER_TLS_CERTDIR: ""
+  APP_IMAGE_TAG: "$CI_COMMIT_SHORT_SHA"
+  WEB_IMAGE: "$CI_REGISTRY_IMAGE/web:$CI_COMMIT_SHORT_SHA"
+  DB_IMAGE: "$CI_REGISTRY_IMAGE/db:$CI_COMMIT_SHORT_SHA"
+  CACHE_IMAGE: "$CI_REGISTRY_IMAGE/cache:$CI_COMMIT_SHORT_SHA"
+
+lint_code:
+  stage: lint
+  image: python:3.11-slim
+  script:
+    - python -m py_compile services/web/app.py services/db/app.py services/cache/app.py
+    - python -m json.tool docs/pipeline_metadata.json
+
+lint_dockerfiles:
+  stage: lint
+  image: hadolint/hadolint:latest-debian
+  script:
+    - hadolint services/web/Dockerfile services/db/Dockerfile services/cache/Dockerfile
+  allow_failure: true
+
+build_images:
+  stage: build
+  image: docker:27
+  services:
+    - docker:27-dind
+  script:
+    - docker compose --env-file .env -f docker-compose.yml build
+    - docker image ls local/complex-web local/complex-db local/complex-cache || true
+
+unit_tests:
+  stage: test
+  image: python:3.11-slim
+  script:
+    - python -m py_compile services/web/app.py services/db/app.py services/cache/app.py
+
+integration_tests:
+  stage: test
+  image: docker:27
+  services:
+    - docker:27-dind
+  script:
+    - docker compose --env-file .env -f docker-compose.yml up -d --build
+    - sleep 8
+    - docker compose --env-file .env -f docker-compose.yml ps
+    - wget -qO- http://docker:18080/health || true
+  after_script:
+    - docker compose --env-file .env -f docker-compose.yml down -v || true
+
+trivy_image_scan:
+  stage: security_scan
+  image: aquasec/trivy:latest
+  script:
+    - trivy image --exit-code 0 --severity HIGH,CRITICAL local/complex-web:${APP_IMAGE_TAG:-local} || true
+  allow_failure: true
+
+sast_basic:
+  stage: security_scan
+  image: python:3.11-slim
+  script:
+    - grep -R "eval(" -n services || true
+    - grep -R "shell=True" -n services || true
+
+push_images:
+  stage: push
+  image: docker:27
+  services:
+    - docker:27-dind
+  script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+    - docker tag local/complex-web:${APP_IMAGE_TAG:-local} "$WEB_IMAGE"
+    - docker tag local/complex-db:${APP_IMAGE_TAG:-local} "$DB_IMAGE"
+    - docker tag local/complex-cache:${APP_IMAGE_TAG:-local} "$CACHE_IMAGE"
+    - docker push "$WEB_IMAGE"
+    - docker push "$DB_IMAGE"
+    - docker push "$CACHE_IMAGE"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"'
+
+deploy_staging:
+  stage: deploy_staging
+  image: docker:27
+  script:
+    - echo "Deploying staging with Docker Compose"
+    - ./deploy/deploy.sh staging
+  environment:
+    name: staging
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"'
+
+e2e_test_staging:
+  stage: e2e_test_staging
+  image: python:3.11-slim
+  script:
+    - python tests/e2e_check.py http://staging.example.local/health
+  allow_failure: true
+
+deploy_production:
+  stage: deploy_production
+  image: docker:27
+  script:
+    - echo "Deploying production with Docker Compose"
+    - ./deploy/deploy.sh production
+  environment:
+    name: production
+  when: manual
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'

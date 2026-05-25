@@ -1,0 +1,12 @@
+name: Complex CI/CD example
+on: [push]
+jobs:
+  lint-build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - run: python -m py_compile services/web/app.py services/db/app.py services/cache/app.py
+      - run: docker compose --env-file .env -f docker-compose.yml build
+      - run: docker compose --env-file .env -f docker-compose.yml up -d
+      - run: curl -f http://127.0.0.1:18080/health

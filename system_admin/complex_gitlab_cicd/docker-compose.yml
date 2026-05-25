@@ -1,0 +1,49 @@
+services:
+  web:
+    image: local/complex-web:${APP_IMAGE_TAG:-local}
+    build:
+      context: ./services/web
+      args:
+        PY_BASE_IMAGE: ${PY_BASE_IMAGE:-python:3.11-slim}
+    environment:
+      APP_ENV: ${APP_ENV:-local}
+      APP_VERSION: ${APP_VERSION:-local}
+      DB_URL: http://db:5432
+      CACHE_URL: http://cache:6379
+    ports:
+      - "${WEB_PORT:-18080}:8080"
+    depends_on:
+      - db
+      - cache
+    networks:
+      - app_net
+
+  db:
+    image: local/complex-db:${APP_IMAGE_TAG:-local}
+    build:
+      context: ./services/db
+      args:
+        PY_BASE_IMAGE: ${PY_BASE_IMAGE:-python:3.11-slim}
+    environment:
+      DATA_DIR: /data
+    volumes:
+      - db_data:/data
+    networks:
+      - app_net
+
+  cache:
+    image: local/complex-cache:${APP_IMAGE_TAG:-local}
+    build:
+      context: ./services/cache
+      args:
+        PY_BASE_IMAGE: ${PY_BASE_IMAGE:-python:3.11-slim}
+    networks:
+      - app_net
+
+networks:
+  app_net:
+    driver: bridge
+
+volumes:
+  db_data:
+    name: ${DB_VOLUME_NAME:-complex_cicd_db_data}

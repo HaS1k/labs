@@ -1,0 +1,6 @@
+{
+  "project": "Complex GitLab CI/CD for Docker Compose application",
+  "services": ["web", "db", "cache"],
+  "environments": ["staging", "production"],
+  "stages": ["lint", "build", "test", "security_scan", "push", "deploy_staging", "e2e_test_staging", "deploy_production"]
+}
