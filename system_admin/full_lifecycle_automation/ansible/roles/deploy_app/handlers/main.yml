@@ -1,0 +1,4 @@
+---
+- name: Restart application stack
+  ansible.builtin.debug:
+    msg: "Application stack would be restarted with Docker Compose"

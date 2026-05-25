@@ -1,0 +1,4 @@
+# Firewall policy for {{ inventory_hostname }}
+{% for port in firewall_allowed_ports %}
+allow tcp/{{ port }}
+{% endfor %}

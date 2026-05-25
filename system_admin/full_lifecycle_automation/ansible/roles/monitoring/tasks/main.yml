@@ -1,0 +1,14 @@
+---
+- name: Install monitoring script
+  ansible.builtin.template:
+    src: docker-monitor.sh.j2
+    dest: "{{ app_root }}/docker-monitor.sh"
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: "0755"
+
+- name: Create monitoring cron description
+  ansible.builtin.copy:
+    dest: "{{ app_root }}/monitoring-cron.txt"
+    content: "*/5 * * * * {{ app_root }}/docker-monitor.sh >> {{ app_root }}/logs/docker-monitor.log 2>&1\n"
+    mode: "0644"

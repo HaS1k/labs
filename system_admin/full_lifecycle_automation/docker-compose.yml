@@ -1,0 +1,56 @@
+services:
+  web:
+    image: local/full-web:${APP_IMAGE_TAG:-local}
+    build:
+      context: ./app/web
+      args:
+        PY_BASE_IMAGE: ${PY_BASE_IMAGE:-python:3.11-slim}
+    environment:
+      APP_ENV: ${APP_ENV:-local}
+      APP_VERSION: ${APP_VERSION:-local}
+      DB_URL: http://db:5432
+      CACHE_URL: http://cache:6379
+      WORKER_URL: http://worker:5555
+    ports:
+      - "${WEB_PORT:-19080}:8080"
+    depends_on:
+      - db
+      - cache
+      - worker
+    networks: [app_net]
+
+  worker:
+    image: local/full-worker:${APP_IMAGE_TAG:-local}
+    build:
+      context: ./app/worker
+      args:
+        PY_BASE_IMAGE: ${PY_BASE_IMAGE:-python:3.11-slim}
+    networks: [app_net]
+
+  db:
+    image: local/full-db:${APP_IMAGE_TAG:-local}
+    build:
+      context: ./app/db
+      args:
+        PY_BASE_IMAGE: ${PY_BASE_IMAGE:-python:3.11-slim}
+    environment:
+      DATA_DIR: /data
+    volumes:
+      - db_data:/data
+    networks: [app_net]
+
+  cache:
+    image: local/full-cache:${APP_IMAGE_TAG:-local}
+    build:
+      context: ./app/cache
+      args:
+        PY_BASE_IMAGE: ${PY_BASE_IMAGE:-python:3.11-slim}
+    networks: [app_net]
+
+networks:
+  app_net:
+    driver: bridge
+
+volumes:
+  db_data:
+    name: ${DB_VOLUME_NAME:-full_lifecycle_db_local}

@@ -1,0 +1,11 @@
+---
+- name: Check Docker client
+  ansible.builtin.command: docker --version
+  register: docker_version
+  changed_when: false
+
+- name: Save Docker version fact file
+  ansible.builtin.copy:
+    dest: "{{ app_root }}/logs/docker-version.txt"
+    content: "{{ docker_version.stdout }}\n"
+    mode: "0644"

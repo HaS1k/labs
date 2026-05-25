@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+echo "=== docker ps ==="
+docker ps --format 'table {{ '{{' }}.Names{{ '}}' }}\t{{ '{{' }}.Image{{ '}}' }}\t{{ '{{' }}.Status{{ '}}' }}' || true
+echo "=== docker stats snapshot ==="
+docker stats --no-stream || true

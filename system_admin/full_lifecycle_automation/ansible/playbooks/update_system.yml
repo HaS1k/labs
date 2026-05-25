@@ -1,0 +1,9 @@
+---
+- name: Safe system update plan
+  hosts: all
+  become: true
+  tasks:
+    - name: Show packages that would be updated
+      ansible.builtin.command: apt list --upgradable
+      changed_when: false
+      failed_when: false

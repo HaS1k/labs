@@ -1,0 +1,22 @@
+---
+- name: Render environment file
+  ansible.builtin.template:
+    src: app.env.j2
+    dest: "{{ app_root }}/compose/.env"
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: "0640"
+
+- name: Render Compose deployment note
+  ansible.builtin.copy:
+    dest: "{{ app_root }}/compose/deployment-plan.txt"
+    content: |
+      Docker Compose project: {{ docker_compose_project }}
+      Web port: {{ app_ports.web }}
+      Database port: {{ app_ports.db }}
+      Cache port: {{ app_ports.cache }}
+      Worker port: {{ app_ports.worker }}
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: "0644"
+  notify: Restart application stack

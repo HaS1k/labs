@@ -1,0 +1,17 @@
+common_packages:
+  - curl
+  - git
+  - ca-certificates
+app_ports:
+  web: 8080
+  db: 5432
+  cache: 6379
+  worker: 5555
+firewall_allowed_ports:
+  - 22
+  - 80
+  - 443
+  - 19080
+  - 19081
+  - 19082
+monitoring_interval: 60

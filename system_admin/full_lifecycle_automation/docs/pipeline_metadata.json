@@ -1,0 +1,1 @@
+{"project":"Full lifecycle automation","components":["GitLab CI","Ansible","Docker","Docker Compose"],"environments":["local","staging","production"]}

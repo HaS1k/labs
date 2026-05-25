@@ -1,0 +1,7 @@
+---
+- name: Render firewall policy documentation
+  ansible.builtin.template:
+    src: firewall-policy.j2
+    dest: "{{ app_root }}/firewall-policy.conf"
+    mode: "0644"
+  notify: Reload firewall policy

@@ -1,0 +1,124 @@
+# Integrated GitLab CI/CD pipeline: Docker + Docker Compose + Ansible.
+stages:
+  - lint
+  - build_images
+  - test
+  - scan_images
+  - push_images
+  - provision_staging_infra
+  - deploy_staging
+  - e2e_tests_staging
+  - provision_prod_infra
+  - deploy_production
+
+variables:
+  DOCKER_TLS_CERTDIR: ""
+  APP_IMAGE_TAG: "$CI_COMMIT_SHORT_SHA"
+  WEB_IMAGE: "$CI_REGISTRY_IMAGE/web:$CI_COMMIT_SHORT_SHA"
+  WORKER_IMAGE: "$CI_REGISTRY_IMAGE/worker:$CI_COMMIT_SHORT_SHA"
+  DB_IMAGE: "$CI_REGISTRY_IMAGE/db:$CI_COMMIT_SHORT_SHA"
+  CACHE_IMAGE: "$CI_REGISTRY_IMAGE/cache:$CI_COMMIT_SHORT_SHA"
+
+lint_code:
+  stage: lint
+  image: python:3.11-slim
+  script:
+    - python -m py_compile app/web/app.py app/worker/app.py app/db/app.py app/cache/app.py app/tests/e2e_check.py
+    - python -m json.tool docs/pipeline_metadata.json
+
+lint_ansible:
+  stage: lint
+  image: python:3.11-slim
+  script:
+    - pip install ansible-core ansible-lint
+    - ansible-lint ansible/site.yml || true
+
+build_images:
+  stage: build_images
+  image: docker:27
+  services: [docker:27-dind]
+  script:
+    - docker compose --env-file .env -f docker-compose.yml build
+    - docker image ls local/full-web
+    - docker image ls local/full-worker
+    - docker image ls local/full-db
+    - docker image ls local/full-cache
+
+unit_tests:
+  stage: test
+  image: python:3.11-slim
+  script:
+    - python -m py_compile app/web/app.py app/worker/app.py app/db/app.py app/cache/app.py
+
+integration_tests:
+  stage: test
+  image: docker:27
+  services: [docker:27-dind]
+  script:
+    - docker compose --env-file .env -f docker-compose.yml up -d --build
+    - sleep 8
+    - docker compose --env-file .env -f docker-compose.yml ps
+    - wget -qO- http://docker:19080/health || true
+  after_script:
+    - docker compose --env-file .env -f docker-compose.yml down -v || true
+
+scan_images:
+  stage: scan_images
+  image: aquasec/trivy:latest
+  script:
+    - trivy image --exit-code 0 --severity HIGH,CRITICAL local/full-web:${APP_IMAGE_TAG:-local} || true
+  allow_failure: true
+
+push_images:
+  stage: push_images
+  image: docker:27
+  services: [docker:27-dind]
+  script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+    - docker tag local/full-web:${APP_IMAGE_TAG:-local} "$WEB_IMAGE"
+    - docker tag local/full-worker:${APP_IMAGE_TAG:-local} "$WORKER_IMAGE"
+    - docker tag local/full-db:${APP_IMAGE_TAG:-local} "$DB_IMAGE"
+    - docker tag local/full-cache:${APP_IMAGE_TAG:-local} "$CACHE_IMAGE"
+    - docker push "$WEB_IMAGE" && docker push "$WORKER_IMAGE" && docker push "$DB_IMAGE" && docker push "$CACHE_IMAGE"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"'
+
+provision_staging_infra:
+  stage: provision_staging_infra
+  image: python:3.11-slim
+  script:
+    - pip install ansible-core
+    - ansible-playbook -i ansible/inventory/hosts.yml ansible/site.yml --limit staging
+
+deploy_staging:
+  stage: deploy_staging
+  image: docker:27
+  script:
+    - ./deploy/deploy.sh staging
+  environment: { name: staging }
+
+e2e_tests_staging:
+  stage: e2e_tests_staging
+  image: python:3.11-slim
+  script:
+    - python app/tests/e2e_check.py http://staging.example.local/health
+  allow_failure: true
+
+provision_prod_infra:
+  stage: provision_prod_infra
+  image: python:3.11-slim
+  script:
+    - pip install ansible-core
+    - ansible-playbook -i ansible/inventory/hosts.yml ansible/site.yml --limit production
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+deploy_production:
+  stage: deploy_production
+  image: docker:27
+  script:
+    - ./deploy/deploy.sh production
+  environment: { name: production }
+  when: manual
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'

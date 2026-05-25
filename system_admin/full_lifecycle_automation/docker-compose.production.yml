@@ -1,0 +1,5 @@
+services:
+  web:
+    environment:
+      APP_ENV: production
+      APP_VERSION: ${APP_VERSION:-production}

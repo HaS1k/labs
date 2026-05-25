@@ -1,0 +1,10 @@
+---
+- name: Provision full lifecycle infrastructure
+  hosts: all
+  become: true
+  roles:
+    - common
+    - docker_host
+    - firewall
+    - deploy_app
+    - monitoring

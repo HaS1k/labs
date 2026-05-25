@@ -1,0 +1,15 @@
+---
+- name: Database backup automation
+  hosts: databases
+  become: true
+  tasks:
+    - name: Create backup directory
+      ansible.builtin.file:
+        path: /opt/full-lifecycle-demo/backups
+        state: directory
+        mode: "0755"
+    - name: Write backup command example
+      ansible.builtin.copy:
+        dest: /opt/full-lifecycle-demo/backups/backup-command.txt
+        content: "docker compose exec db pg_dump -U app appdb > backup.sql\n"
+        mode: "0644"

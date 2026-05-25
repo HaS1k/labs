@@ -1,0 +1,4 @@
+---
+- name: Reload firewall policy
+  ansible.builtin.debug:
+    msg: "Firewall policy would be reloaded on a real server"
