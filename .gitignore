@@ -1,0 +1,4 @@
+lab_cicd_results/
+*.log
+__pycache__/
+.env.local

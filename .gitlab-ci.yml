@@ -1,0 +1,41 @@
+stages:
+  - build
+  - test
+  - push
+  - deploy
+
+variables:
+  DOCKER_REGISTRY: local.registry.example
+  APP_IMAGE_TAG: $CI_COMMIT_SHORT_SHA
+
+build_images:
+  stage: build
+  script:
+    - export APP_TAG=$APP_IMAGE_TAG
+    - docker compose -f docker-compose.dev.yml build
+
+test_app:
+  stage: test
+  script:
+    - export APP_TAG=$APP_IMAGE_TAG
+    - docker compose -f docker-compose.dev.yml up -d
+    - ./scripts/test.sh
+    - docker compose -f docker-compose.dev.yml down
+
+push_images:
+  stage: push
+  script:
+    - echo "Registry push is skipped in local simulation"
+    - echo "docker push $DOCKER_REGISTRY/cicd-web:$APP_IMAGE_TAG"
+  only:
+    - main
+
+deploy_staging:
+  stage: deploy
+  script:
+    - export APP_TAG=$APP_IMAGE_TAG
+    - ./scripts/deploy.sh prod
+  environment:
+    name: staging
+  only:
+    - main

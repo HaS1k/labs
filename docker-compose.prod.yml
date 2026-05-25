@@ -1,0 +1,49 @@
+services:
+  db:
+    image: local/cicd-db:${APP_TAG:-local}
+    environment:
+      DB_PORT: "7000"
+      DB_FILE: /data/storage.json
+      DB_MESSAGE: ${DB_MESSAGE}
+    volumes:
+      - db_data_prod:/data
+    networks:
+      - appnet_prod
+
+  cache:
+    image: local/cicd-cache:${APP_TAG:-local}
+    networks:
+      - appnet_prod
+
+  web:
+    image: local/cicd-web:${APP_TAG:-local}
+    environment:
+      APP_ENV: prod
+      DB_HOST: db
+      DB_PORT: "7000"
+      CACHE_HOST: cache
+      CACHE_PORT: "7001"
+    depends_on:
+      - db
+      - cache
+    networks:
+      - appnet_prod
+
+  proxy:
+    image: local/cicd-proxy:${APP_TAG:-local}
+    environment:
+      WEB_HOST: web
+      WEB_PORT: "5000"
+    ports:
+      - "${WEB_PORT:-8095}:8080"
+    depends_on:
+      - web
+    networks:
+      - appnet_prod
+
+volumes:
+  db_data_prod:
+
+networks:
+  appnet_prod:
+    driver: bridge

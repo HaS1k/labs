@@ -1,0 +1,65 @@
+services:
+  db:
+    build:
+      context: ./services/db
+      args:
+        PY_BASE_IMAGE: ${PY_BASE_IMAGE}
+    image: local/cicd-db:${APP_TAG:-dev}
+    environment:
+      DB_PORT: "7000"
+      DB_FILE: /data/storage.json
+      DB_MESSAGE: ${DB_MESSAGE}
+    volumes:
+      - db_data:/data
+    networks:
+      - appnet
+
+  cache:
+    build:
+      context: ./services/cache
+      args:
+        PY_BASE_IMAGE: ${PY_BASE_IMAGE}
+    image: local/cicd-cache:${APP_TAG:-dev}
+    networks:
+      - appnet
+
+  web:
+    build:
+      context: ./services/web
+      args:
+        PY_BASE_IMAGE: ${PY_BASE_IMAGE}
+    image: local/cicd-web:${APP_TAG:-dev}
+    environment:
+      APP_ENV: ${APP_ENV:-dev}
+      DB_HOST: db
+      DB_PORT: "7000"
+      CACHE_HOST: cache
+      CACHE_PORT: "7001"
+    depends_on:
+      - db
+      - cache
+    networks:
+      - appnet
+
+  proxy:
+    build:
+      context: ./services/proxy
+      args:
+        PY_BASE_IMAGE: ${PY_BASE_IMAGE}
+    image: local/cicd-proxy:${APP_TAG:-dev}
+    environment:
+      WEB_HOST: web
+      WEB_PORT: "5000"
+    ports:
+      - "${WEB_PORT:-8095}:8080"
+    depends_on:
+      - web
+    networks:
+      - appnet
+
+volumes:
+  db_data:
+
+networks:
+  appnet:
+    driver: bridge
